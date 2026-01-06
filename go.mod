@@ -3,7 +3,7 @@ module github.com/CZERTAINLY/CBOM-lens
 go 1.25.4
 
 require (
-	cuelang.org/go v0.15.1
+	cuelang.org/go v0.15.3
 	github.com/CycloneDX/cyclonedx-go v0.9.3
 	github.com/Ullaakut/nmap/v3 v3.1.0
 	github.com/anchore/stereoscope v0.1.16
