@@ -1,6 +1,7 @@
 package cdxprops
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
@@ -54,14 +55,20 @@ type TLSInfo struct {
 }
 
 func (c Converter) parseNmap(ctx context.Context, port model.NmapPort) (compos []cdx.Component, deps []cdx.Dependency, services []cdx.Service, err error) {
-	switch port.Service.Name {
+	tunnelOrService := cmp.Or(port.Service.Tunnel, port.Service.Name)
+
+	switch tunnelOrService {
 	case "ssh":
 		compos = append(compos, c.sshToCompos(ctx, port)...)
 	case "ssl", "http", "https", "https-alt":
 		c := c.tlsToCompos(ctx, port)
 		compos = append(compos, c...)
 	default:
-		slog.WarnContext(ctx, "can't parse unsupported nmap service: ignoring", "service", port.Service.Name)
+		serviceName := port.Service.Name
+		if port.Service.Tunnel != "" {
+			serviceName = port.Service.Tunnel + "/" + serviceName
+		}
+		slog.WarnContext(ctx, "can't parse unsupported nmap service: ignoring", "service", serviceName)
 	}
 
 	// FIXME: handle cdx services too

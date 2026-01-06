@@ -48,7 +48,8 @@ func TestScanner(t *testing.T) {
 						State:    "open",
 						Protocol: "tcp",
 						Service: model.NmapService{
-							Name: "ssl",
+							Name:   "ssl",
+							Tunnel: "ssl",
 						},
 					},
 				},
@@ -68,7 +69,8 @@ func TestScanner(t *testing.T) {
 						State:    "open",
 						Protocol: "tcp",
 						Service: model.NmapService{
-							Name: "ssl",
+							Name:   "ssl",
+							Tunnel: "ssl",
 						},
 					},
 				},
@@ -119,6 +121,7 @@ func TestScanner(t *testing.T) {
 			require.Equal(t, expPort.State, gotPort.State)
 			require.Equal(t, expPort.Protocol, gotPort.Protocol)
 			require.Equal(t, expPort.Service.Name, gotPort.Service.Name)
+			require.Equal(t, expPort.Service.Tunnel, gotPort.Service.Tunnel)
 
 			if gotPort.Service.Name == "ssl" {
 				require.Len(t, gotPort.Ciphers, 2)
@@ -165,6 +168,7 @@ func TestHostToModel(t *testing.T) {
 	require.Equal(t, "https", p.Service.Name)
 	require.Empty(t, p.Service.Product)
 	require.Empty(t, p.Service.Version)
+	require.Equal(t, "ssl", p.Service.Tunnel)
 
 	// Cipher groups
 	require.Len(t, p.Ciphers, 1)

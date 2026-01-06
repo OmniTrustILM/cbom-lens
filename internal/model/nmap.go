@@ -22,6 +22,7 @@ type NmapPort struct {
 type NmapService struct {
 	Name    string
 	Product string
+	Tunnel  string // can be empty
 	Version string
 }
 
