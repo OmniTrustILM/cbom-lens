@@ -115,10 +115,32 @@ func (c Converter) Nmap(ctx context.Context, nmap model.Nmap) []model.Detection 
 			return nil
 		}
 
-		// converts http+ssl to https
-		proto := port.Service.Name
+		// nmap's service detection via /etc/services can misidentify protocols on dynamic ports.
+		// When SSL tunnel is detected but the service is unknown (not in our known protocol map),
+		// default to https since ephemeral ports like 32769 typically indicate containerized HTTP services,
+		// rather than legacy protocols like filenet-rpc.
+		var proto = port.Service.Name
 		if port.Service.Tunnel == "ssl" {
-			proto += "s"
+			switch port.Service.Name {
+			case "http":
+				proto = "https"
+			case "ftp":
+				proto = "ftps"
+			case "smtp":
+				proto = "smtps"
+			case "imap":
+				proto = "imaps"
+			case "pop3":
+				proto = "pop3s"
+			case "ldap":
+				proto = "ldaps"
+			default:
+				if port.TLSCerts != nil {
+					proto = "https"
+				} else {
+					proto += "+ssl"
+				}
+			}
 		}
 
 		detections[i] = model.Detection{
