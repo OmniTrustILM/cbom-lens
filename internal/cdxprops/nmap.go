@@ -67,7 +67,6 @@ func (c Converter) parseNmap(ctx context.Context, port model.NmapPort) (compos [
 		slog.WarnContext(ctx, "can't parse unsupported nmap service: ignoring", "service_name", port.Service.Name, "tunnel", port.Service.Tunnel)
 	}
 
-	// FIXME: handle cdx services too
 	return
 }
 

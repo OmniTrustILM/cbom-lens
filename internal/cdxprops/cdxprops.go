@@ -13,8 +13,6 @@ import (
 	"strconv"
 	"strings"
 
-	stdlog "log"
-
 	"github.com/CZERTAINLY/CBOM-lens/internal/model"
 	cdx "github.com/CycloneDX/cyclonedx-go"
 )
@@ -77,7 +75,6 @@ func (c Converter) CertHit(ctx context.Context, hit model.CertHit) *model.Detect
 	}
 
 	compos, deps, err := c.certHitToComponents(ctx, hit)
-	// TODO: figure out the PQC
 	if err != nil {
 		slog.ErrorContext(ctx, "can't parse certificate", "error", err)
 		return nil
