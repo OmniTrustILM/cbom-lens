@@ -250,7 +250,7 @@ containers:
     config:
         - name: docker-test
           type: docker
-          host: ${DOCKER_HOST}
+          host: {{.Host}}
           images: 
               - {{.Image}}
 ports:
@@ -326,13 +326,21 @@ service:
 		require.NoError(t, err)
 	})
 
+	host := os.Getenv("DOCKER_HOST")
+	if host == "" {
+		host = "unix:///var/run/docker.sock"
+	}
+	t.Logf("using DOCKER_HOST=%s", host)
+
 	// given there is a config
 	var config = struct {
 		Image string
 		Port  string
+		Host  string
 	}{
 		Image: image,
 		Port:  mp.Port(),
+		Host:  host,
 	}
 	tmpl, err := template.New("config").Parse(configTemplate)
 	require.NoError(t, err)
