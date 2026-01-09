@@ -185,7 +185,7 @@ type dentry struct {
 func (e dentry) Location() string {
 	var imageRef string
 
-	if e.image.Metadata.Tags != nil {
+	if len(e.image.Metadata.Tags) >= 1 {
 		imageRef = e.image.Metadata.Tags[0].Identifier()
 	} else {
 		imageRef = e.image.Metadata.ManifestDigest

@@ -397,15 +397,18 @@ service:
 			"location": "tcp://localhost:37257"
 		  }
 	*/
-	var cert *cdx.Component
-	for _, compo := range *bom.Components {
+	matchIdx := -1
+	for i, compo := range *bom.Components {
 		if compo.Type == cdx.ComponentTypeCryptographicAsset &&
 			compo.CryptoProperties != nil &&
 			compo.CryptoProperties.AssetType == cdx.CryptoAssetTypeCertificate {
-			cert = &compo
+			// Ensure there is exactly one matching certificate component
+			require.Equal(t, -1, matchIdx, "expected exactly one certificate component, found multiple")
+			matchIdx = i
 		}
 	}
-	require.NotNil(t, cert)
+	require.NotEqual(t, -1, matchIdx, "no certificate component found")
+	cert := &(*bom.Components)[matchIdx]
 	require.NotNil(t, cert.Evidence)
 	require.NotNil(t, cert.Evidence.Occurrences)
 	require.Len(t, *cert.Evidence.Occurrences, 3)

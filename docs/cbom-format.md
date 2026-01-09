@@ -164,9 +164,9 @@ Example:
 ```json
 "evidence": {
   "occurrences": [
-    { "location": "container://docker/image-tag-or-digest:/cert.pem" },
+    { "location": "container://docker/image-tag-or-digest//cert.pem" },
     { "location": "filesystem:///tmp/cert.pem" },
-    { "location": "https://localhost:37257" }
+    { "location": "tcp://localhost:37257" }
   ]
 }
 ```
