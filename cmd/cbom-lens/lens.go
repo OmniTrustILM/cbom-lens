@@ -153,7 +153,7 @@ func (s Lens) Do(ctx context.Context, out io.Writer) error {
 
 	<-processed
 	b = b.WithCounter(s.counter)
-	err = b.AsJSON(out)
+	err = b.AsJSON(ctx, out)
 	if err != nil {
 		return fmt.Errorf("formatting BOM as JSON: %w", err)
 	}

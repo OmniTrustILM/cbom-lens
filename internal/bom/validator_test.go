@@ -36,7 +36,7 @@ func TestValidator_Validate_Errors(t *testing.T) {
 			// when bom
 			b, err := bom.NewBuilder(model.CBOM{Version: "1.6"})
 			require.NoError(t, err)
-			bom := b.BOM()
+			bom := b.BOM(t.Context())
 			tt.given(&bom)
 
 			// and when []byte
@@ -83,7 +83,7 @@ func TestValidator_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.scenario, func(t *testing.T) {
 			// when
-			bom := tt.given(t).BOM()
+			bom := tt.given(t).BOM(t.Context())
 			var buf bytes.Buffer
 			enc := cdx.NewBOMEncoder(&buf, cdx.BOMFileFormatJSON)
 			require.NoError(t, enc.Encode(&bom))
@@ -110,7 +110,7 @@ func TestValidator_UnsupportedVersion(t *testing.T) {
 	require.NoError(t, err)
 	b, err := bom.NewBuilder(model.CBOM{Version: "1.6"})
 	require.NoError(t, err)
-	bom := b.BOM()
+	bom := b.BOM(t.Context())
 
 	bom.SpecVersion = cdx.SpecVersion1_5
 

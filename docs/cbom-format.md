@@ -17,64 +17,32 @@ The exact JSON structure is defined by the CycloneDX schema, with CBOM-Lens-spec
 
 ---
 
-## 2. Stable `bom-ref` identifiers
+## 2. Unique yet Secure `bom-ref` Identifiers
 
-Each cryptographic asset discovered by CBOM-Lens is assigned a stable `bom-ref` (BOM reference) derived from its content.
+CBOM-Lens tracks discovered cryptographic components using content-based identifiers (sha256) during the scanning and correlation phase. This approach enables accurate correlation of identical keys or certificates discovered across different contexts—filesystem scans, container images, and network port scans.
 
-- The default hash algorithm is **SHA-256**.
-- `bom-ref` values are designed to be stable across scans and sources, so the same asset gets the same `bom-ref` wherever it appears.
+However, content-based hashes are unsuitable for the final CBOM output because hash values can potentially be used to reverse-engineer or identify the underlying cryptographic secrets through rainbow tables or brute-force attacks.
 
-This enables:
+To address this security concern, CBOM-Lens post-processes the CBOM after correlation is complete. It replaces each content-based hash with a randomly generated UUID, providing stable yet cryptographically secure identifiers for every component.
 
-- Correlating the same key or certificate across filesystem, container, and port scans.
-- De-duplicating assets in analysis tools.
+**Key characteristics:**
+- **Unique**: Each component receives a distinct identifier within the CBOM
+- **Secure**: UUIDs contain no information about the underlying cryptographic material
+- **Stable (per CBOM document)**: References remain consistent within a single CBOM document
+- **Format-preserving**: Original reference format (e.g., `component@hash`) is maintained as `component@uuid`
 
----
-
-## 3. Exceptions: private keys and algorithms
-
-There are two important exceptions to the "hash the content" rule.
-
-### 3.1 Private keys
-
-Hashing a private key directly would leak sensitive information (the hash uniquely identifies the key material).
-
-To avoid this, CBOM-Lens uses the hash of the **corresponding public key** instead.
-
-Example:
-
-```json
-[
-  {"bom-ref": "crypto/key/rsa-4096@sha256:f1ac7a3953323b932aade7e47c045d7981e4602fe465883d21f77051cf3c2dbc"},
-  {"bom-ref": "crypto/private_key/rsa-4096@sha256:f1ac7a3953323b932aade7e47c045d7981e4602fe465883d21f77051cf3c2dbc"}
-]
-```
-
-In this example, the public and private key share the same hash suffix because it is based on the public key.
-
-### 3.2 Algorithms
-
-Algorithms themselves (e.g., `RSA-4096`, `SHA-256`, PQC algorithms) do not have inherent content to hash.
-
-For algorithm components, CBOM-Lens:
-
-- Computes a hash of the component's **CycloneDX JSON representation**.
-- Excludes the `bom-ref` and `evidence` fields from this hash to avoid circular dependencies and unstable references.
-
-This ensures:
-
-- Different algorithms always receive unique references.
-- The same algorithm with different BOM properties yields distinct `bom-ref` values.
+> [!WARNING]
+> Component references (`bom-ref`) are unique within a single CBOM document only. The same cryptographic component discovered in separate scans will receive different UUIDs in each resulting CBOM.
 
 ---
 
-## 4. Example algorithm component
+## 3. Example algorithm component
 
 Example of an algorithm component in a CBOM:
 
 ```json
 {
-  "bom-ref": "crypto/algorithm/rsa-4096@sha256:2cc0b015108f202753b120182f3c437db4d5bf6e668b019a1f9099f5709e167f",
+  "bom-ref": "crypto/algorithm/rsa-4096@3f48a0ca-c944-4ac4-b37b-df51be5ede90",
   "type": "cryptographic-asset",
   "name": "RSA-4096",
   "evidence": {
@@ -91,7 +59,7 @@ Example of an algorithm component in a CBOM:
 
 ---
 
-## 5. Post-Quantum Cryptography (PQC)
+## 4. Post-Quantum Cryptography (PQC)
 
 Go's standard library does not (yet) implement PQC algorithms, but CBOM-Lens can still **detect** and model them where present.
 
@@ -101,7 +69,7 @@ Example (truncated) CBOM entry:
 
 ```json
 {
-  "bom-ref": "crypto/algorithm/ml-dsa-65@sha256:f8c9a2448272eebee3bf9c777bff35d1f84d59166534cc848eed418f3fbc08a3",
+  "bom-ref": "crypto/algorithm/ml-dsa-65@03acfb52-5eec-466f-88dc-3b9837ffc17e",
   "type": "cryptographic-asset",
   "name": "ML-DSA-65",
   "properties": [
@@ -134,7 +102,7 @@ This representation captures algorithm characteristics and their occurrences whi
 
 ---
 
-## 6. Evidence and correlation
+## 5. Evidence and correlation
 
 CBOM-Lens attaches **evidence** to components to describe where an asset was observed, for example:
 
@@ -173,9 +141,9 @@ Example:
 
 ---
 
-## 7. Metric Definitions
+## 6. Metric Definitions
 
-### 7.1. Sources
+### 6.1. Sources
 
 - **cbom_lens_sources_total**: Tracks each top-level source that the scanner attempts to process. This includes:
   - Filesystem root directories
@@ -188,7 +156,7 @@ Example:
   - Nmap binary is missing or can't be executed
   - Other unspecified errors
 
-### 7.2. Files
+### 6.2. Files
 
 - **cbom_lens_files_total**: Counts every file path encountered during the scan, regardless of whether it was successfully processed, excluded, or errored.
 
@@ -203,7 +171,7 @@ Example:
   - Read errors
   - Other I/O problems
 
-### 7.3. Example in CBOM
+### 6.3. Example in CBOM
 
 ```json
 "properties": [
@@ -232,7 +200,7 @@ Example:
 
 ---
 
-## 8. Next steps
+## 7. Next steps
 
 - For scanning use cases and strategies: see [Scanning use cases & best practices](scanning-use-cases.md).
 - For configuration details: see the [Configuration guide](configuration.md) and [Configuration reference](config.md).
