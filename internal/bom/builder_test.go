@@ -250,7 +250,7 @@ func TestBuilder_BOM(t *testing.T) {
 		builder, err := NewBuilder(model.CBOM{Version: "1.6"})
 		require.NoError(t, err)
 
-		bom := builder.BOM()
+		bom := builder.BOM(t.Context())
 
 		require.Equal(t, "https://cyclonedx.org/schema/bom-1.6.schema.json", bom.JSONSchema)
 		require.Equal(t, "CycloneDX", bom.BOMFormat)
@@ -283,7 +283,7 @@ func TestBuilder_BOM(t *testing.T) {
 			model.Detection{Components: components},
 		)
 
-		bom := builder.BOM()
+		bom := builder.BOM(t.Context())
 
 		require.Len(t, *bom.Components, 2)
 
@@ -296,7 +296,7 @@ func TestBuilder_BOM(t *testing.T) {
 		builder, err := NewBuilder(model.CBOM{Version: "1.6"})
 		require.NoError(t, err)
 
-		bom := builder.BOM()
+		bom := builder.BOM(t.Context())
 
 		require.NotNil(t, bom.Metadata)
 		require.NotEmpty(t, bom.Metadata.Timestamp)
@@ -315,7 +315,7 @@ func TestBuilder_AsJSON(t *testing.T) {
 		require.NoError(t, err)
 
 		var buf bytes.Buffer
-		err = builder.AsJSON(&buf)
+		err = builder.AsJSON(t.Context(), &buf)
 
 		require.NoError(t, err)
 		require.NotEmpty(t, buf.String())
@@ -449,7 +449,7 @@ func TestSafeRefs_Component(t *testing.T) {
 			Name:   "test",
 		}
 
-		result := refs.component(comp)
+		result := refs.component(t.Context(), comp)
 
 		require.Equal(t, "new-ref", result.BOMRef)
 		require.Equal(t, "test", result.Name)
@@ -464,7 +464,7 @@ func TestSafeRefs_Dependency(t *testing.T) {
 			},
 		}
 
-		dep := refs.dependency("comp-1", nil)
+		dep := refs.dependency(t.Context(), "comp-1", nil)
 
 		require.Equal(t, "safe-comp-1", dep.Ref)
 		require.Nil(t, dep.Dependencies)
@@ -480,7 +480,7 @@ func TestSafeRefs_Dependency(t *testing.T) {
 		}
 
 		deps := []string{"dep-1", "dep-2"}
-		dep := refs.dependency("comp-1", &deps)
+		dep := refs.dependency(t.Context(), "comp-1", &deps)
 
 		require.Equal(t, "safe-comp-1", dep.Ref)
 		require.NotNil(t, dep.Dependencies)
@@ -502,7 +502,7 @@ func TestReplaceBOMReferences(t *testing.T) {
 			BOMRef: "old-ref",
 		}
 
-		compo = refs.component(compo)
+		compo = refs.component(t.Context(), compo)
 
 		require.EqualValues(t, cdx.BOMReference("new-ref"), compo.BOMRef)
 	})
@@ -553,7 +553,7 @@ func TestReplaceBOMReferences(t *testing.T) {
 		}
 
 		for idx, compo := range compos {
-			compos[idx] = refs.component(compo)
+			compos[idx] = refs.component(t.Context(), compo)
 		}
 
 		require.EqualValues(t, cdx.BOMReference("new-ref-1"), compos[0].BOMRef)

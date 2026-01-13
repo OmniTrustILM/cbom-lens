@@ -105,7 +105,7 @@ func (b *Builder) appendDetection(ctx context.Context, detection model.Detection
 }
 
 // BOM returns a cdx.BOM based on a data inside the Builder
-func (b *Builder) BOM() cdx.BOM {
+func (b *Builder) BOM(ctx context.Context) cdx.BOM {
 	safeRefs := b.safeRefs()
 
 	components := make([]cdx.Component, 0, len(b.components))
@@ -113,12 +113,12 @@ func (b *Builder) BOM() cdx.BOM {
 		if compop == nil {
 			continue
 		}
-		components = append(components, safeRefs.component(*compop))
+		components = append(components, safeRefs.component(ctx, *compop))
 	}
 
 	dependencies := make([]cdx.Dependency, 0, len(b.dependencies))
 	for bomRef, depsp := range b.dependencies {
-		dependencies = append(dependencies, safeRefs.dependency(bomRef, depsp))
+		dependencies = append(dependencies, safeRefs.dependency(ctx, bomRef, depsp))
 	}
 
 	var statistics []cdx.Property
@@ -165,8 +165,8 @@ func (b *Builder) BOM() cdx.BOM {
 }
 
 // AsJSON encode the BOM into JSON format
-func (b *Builder) AsJSON(w io.Writer) error {
-	bom := b.BOM()
+func (b *Builder) AsJSON(ctx context.Context, w io.Writer) error {
+	bom := b.BOM(ctx)
 	return cdx.NewBOMEncoder(w, cdx.BOMFileFormatJSON).SetPretty(true).Encode(&bom)
 }
 
@@ -217,8 +217,20 @@ func bomStatistics(counter *stats.Stats) []cdx.Property {
 	return props
 }
 
+type refs map[string]string
+
+func (r refs) get(ctx context.Context, key string) string {
+	safe, ok := r[key]
+	if !ok {
+		slog.WarnContext(ctx, "unknown bom-ref to replace, generating a new one", "original", key, "new", safe)
+		safe = uuid.New().String()
+		r[key] = safe
+	}
+	return safe
+}
+
 type safeRefs struct {
-	refs map[string]string
+	refs refs
 }
 
 func (b Builder) safeRefs() safeRefs {
@@ -227,13 +239,15 @@ func (b Builder) safeRefs() safeRefs {
 		if compop == nil {
 			continue
 		}
-		refs[compop.BOMRef] = safeRef(compop.BOMRef)
+		if _, ok := refs[compop.BOMRef]; !ok {
+			refs[compop.BOMRef] = safeRef(compop.BOMRef)
+		}
 	}
 	return safeRefs{refs: refs}
 }
 
-func (s safeRefs) component(compo cdx.Component) cdx.Component {
-	safe := s.refs[compo.BOMRef]
+func (s safeRefs) component(ctx context.Context, compo cdx.Component) cdx.Component {
+	safe := s.refs.get(ctx, compo.BOMRef)
 	compo.BOMRef = safe
 
 	replaceBOMReferences(s.refs, reflect.ValueOf(&compo))
@@ -241,9 +255,8 @@ func (s safeRefs) component(compo cdx.Component) cdx.Component {
 	return compo
 }
 
-func (s safeRefs) dependency(bomRef string, depsp *[]string) cdx.Dependency {
-
-	safe := s.refs[bomRef]
+func (s safeRefs) dependency(ctx context.Context, bomRef string, depsp *[]string) cdx.Dependency {
+	safe := s.refs.get(ctx, bomRef)
 	if depsp != nil {
 		deps := make([]string, len(*depsp))
 		for idx, dep := range *depsp {
