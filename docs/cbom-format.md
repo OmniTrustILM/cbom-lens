@@ -28,7 +28,7 @@ To address this security concern, CBOM-Lens post-processes the CBOM after correl
 **Key characteristics:**
 - **Unique**: Each component receives a distinct identifier within the CBOM
 - **Secure**: UUIDs contain no information about the underlying cryptographic material
-- **Stable**: References remain consistent throughout the CBOM structure
+- **Stable (per CBOM document)**: References remain consistent within a single CBOM document
 - **Format-preserving**: Original reference format (e.g., `component@hash`) is maintained as `component@uuid`
 
 > [!WARNING]
