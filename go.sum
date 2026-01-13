@@ -65,6 +65,8 @@ github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04 h1:VzprUTpc0v
 github.com/anchore/go-testutils v0.0.0-20200925183923-d5f45b0d3c04/go.mod h1:6dK64g27Qi1qGQZ67gFmBFvEHScy0/C8qhQhNe5B5pQ=
 github.com/anchore/stereoscope v0.1.16 h1:kNcEH/B16DTPMaUIzJAFFaDX3N4mj06xnLFZcUC1gaE=
 github.com/anchore/stereoscope v0.1.16/go.mod h1:bXzc5wCnaJzzTTX5wGyUj2bWfwJbphCYLJfFEqXjbd8=
+github.com/anchore/stereoscope v0.1.17 h1:5M7IkeJEbNsWQx//fc76g5IO4qU66vvQluYK71/Of7I=
+github.com/anchore/stereoscope v0.1.17/go.mod h1:I0SxhY9lL3rPCD4FAl56JxL+gbL9nUVOFful8dwQ56o=
 github.com/andreyvit/diff v0.0.0-20170406064948-c7f18ee00883/go.mod h1:rCTlJbsFo29Kk6CurOXKm700vrz8f0KW0JNfpkRJY/8=
 github.com/andybalholm/brotli v1.2.0 h1:ukwgCxwYrmACq68yiUqwIWnGY0cTPox/M94sVwToPjQ=
 github.com/andybalholm/brotli v1.2.0/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
