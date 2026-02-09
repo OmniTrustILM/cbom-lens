@@ -3,14 +3,24 @@ package model
 import (
 	"crypto"
 	"crypto/x509"
-
-	"github.com/zricethezav/gitleaks/v8/report"
 )
 
 // Leak are data returned by gitleaks module
 type Leaks struct {
 	Location string
-	Findings []report.Finding
+	Findings []Finding
+}
+
+// Finding is a subset of a "github.com/zricethezav/gitleaks/v8/report" with parsed items. See
+// https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml for rule ids.
+type Finding struct {
+	RuleID      string // private-key, token, ...
+	Description string
+	Secret      string
+	StartLine   int
+
+	// RuleID specific data
+	PEMBundle PEMBundle // RuleID == "private-key"
 }
 
 // CertHit is a detected x509 certificate

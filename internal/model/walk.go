@@ -1,4 +1,4 @@
-package walk
+package model
 
 import (
 	"io"
@@ -6,9 +6,9 @@ import (
 )
 
 // Entry abstracts the filesystem entry - it does not matter if a file is from
-// filesystem or OCI image. It allows to get the path, Open the file and do stat
+// filesystem or OCI image. It allows to get the location, Open the file and perform a stat
 type Entry interface {
-	Path() string
+	Location() string
 	Open() (io.ReadCloser, error)
 	Stat() (fs.FileInfo, error)
 }

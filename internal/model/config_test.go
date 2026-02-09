@@ -270,6 +270,9 @@ cbom:
 				require.NoError(t, err)
 				require.NotNil(t, cfg)
 
+				// ignore resolved path, tested in TestLoadConfig_AbsolutePaths
+				cfg.Filesystem.Paths = nil
+
 				actualJSON, err := json.Marshal(cfg)
 				require.NoError(t, err)
 				require.JSONEq(t, tc.expectedJSON, string(actualJSON))
@@ -958,7 +961,64 @@ ports:
 	require.Equal(t, "test_ee_containers1_image_1", c0.Images[0])
 
 	require.Equal(t, "test_ee_nmap_binary", cfg.Ports.Binary)
+}
 
+func TestLoadConfig_AbsolutePaths(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	const yml = `
+version: 0
+filesystem:
+  enabled: true
+  paths:
+    - /absolute/path
+    - relative/path
+`
+
+	configPath := filepath.Join(dir, "config.yaml")
+	f, err := os.Create(configPath)
+	require.NoError(t, err)
+	_, err = f.Write([]byte(yml))
+	require.NoError(t, err)
+	err = f.Sync()
+	require.NoError(t, err)
+	err = f.Close()
+	require.NoError(t, err)
+
+	var testCases = []struct {
+		scenario string
+		given    func(t *testing.T) []string
+	}{
+		{
+			scenario: "config",
+			given: func(t *testing.T) []string {
+				t.Helper()
+				c, err := model.LoadConfigFromPath(configPath)
+				require.NoError(t, err)
+				require.Len(t, c.Filesystem.Paths, 2)
+				return c.Filesystem.Paths
+			},
+		},
+		{
+			scenario: "scan",
+			given: func(t *testing.T) []string {
+				t.Helper()
+				c, err := model.LoadScanConfigFromPath(configPath)
+				require.NoError(t, err)
+				require.Len(t, c.Filesystem.Paths, 2)
+				return c.Filesystem.Paths
+			},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.scenario, func(t *testing.T) {
+			t.Parallel()
+			paths := tt.given(t)
+			require.Equal(t, "/absolute/path", paths[0])
+			require.Equal(t, filepath.Join(dir, "relative/path"), paths[1])
+		})
+	}
 }
 
 func saveYaml(t *testing.T, yml string) (abspath string) {

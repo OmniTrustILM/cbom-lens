@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -334,9 +335,16 @@ func loadConfigFromFile1[PT configPT](path string, pt PT, schema cue.Value) erro
 	if path == "-" {
 		r = os.Stdin
 	} else {
+		if !filepath.IsAbs(path) {
+			var err error
+			path, err = filepath.Abs(path)
+			if err != nil {
+				return fmt.Errorf("determining absolute path: %w", err)
+			}
+		}
 		f, err := os.Open(path)
 		if err != nil {
-			return fmt.Errorf("error opening config file: %w", err)
+			return fmt.Errorf("opening config file: %w", err)
 		}
 		r = f
 		defer func() {
@@ -357,6 +365,31 @@ func loadConfigFromFile1[PT configPT](path string, pt PT, schema cue.Value) erro
 		}
 		return fmt.Errorf("parsing config: %w", err)
 	}
+
+	configRoot := filepath.Dir(path)
+
+	var paths []string
+	switch cfg := any(pt).(type) {
+	case *Scan:
+		paths = cfg.Filesystem.Paths
+		if paths == nil {
+			cfg.Filesystem.Paths = []string{configRoot}
+		}
+	case *Config:
+		paths = cfg.Filesystem.Paths
+		if paths == nil {
+			cfg.Filesystem.Paths = []string{configRoot}
+		}
+	default:
+		return fmt.Errorf("unsupported config type %T", any(pt))
+	}
+
+	for i, path := range paths {
+		if !filepath.IsAbs(path) {
+			paths[i] = filepath.Join(configRoot, path)
+		}
+	}
+
 	return nil
 }
 

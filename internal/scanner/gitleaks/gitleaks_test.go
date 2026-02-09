@@ -2,9 +2,13 @@ package gitleaks
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"sync"
 	"testing"
 
+	"github.com/CZERTAINLY/CBOM-lens/internal/cdxprops/cdxtest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,7 +38,7 @@ func TestDetect_NoFindings_ReturnsNil(t *testing.T) {
 	require.NoError(t, err)
 	res, err := d.Scan(t.Context(), []byte("just some text without secrets"), "plain.txt")
 	require.NoError(t, err)
-	require.Nil(t, res.Findings)
+	require.Empty(t, res.Findings)
 }
 
 func TestDetect_ConcurrentCalls(t *testing.T) {
@@ -85,8 +89,9 @@ func TestDetect_ConcurrentCalls(t *testing.T) {
 	}
 }
 
+// ensure we hit the early cancellation branch
 func TestDetect_ContextCanceled(t *testing.T) {
-	// ensure we hit the early cancellation branch
+	// do not run in parallel (global upstream state)
 	d, err := NewScanner()
 	require.NoError(t, err)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -94,4 +99,46 @@ func TestDetect_ContextCanceled(t *testing.T) {
 	res, err := d.Scan(ctx, []byte("anything"), "x.txt")
 	require.Error(t, err)
 	require.Nil(t, res.Findings)
+}
+
+func TestDetect_PrivateKey(t *testing.T) {
+	// do not run in parallel (global upstream state)
+	const javaTemplate = `
+public class PrivateKeyExample {
+    public static void main(String[] args) {
+    private static final String PRIVATE_KEY = """
+%s
+        """;
+        
+        System.out.println("=== Private Key Information ===");
+        System.out.println("Key Type: RSA");
+        System.out.println("Key Length: " + privateKey.length() + " characters");
+        System.out.println("\nPrivate Key Content:");
+        System.out.println(privateKey);
+        
+        // In production, NEVER hardcode private keys!
+        System.out.println("\n⚠️  WARNING: This is an example with a fake key. Never hardcode real private keys in source code!");
+    }
+}`
+
+	// given java source code with a hardcoded PEM block
+	privKey, err := cdxtest.GenRSAPrivateKey(1024)
+	require.NoError(t, err)
+	privKeyBytes := x509.MarshalPKCS1PrivateKey(privKey)
+	privateKeyPEM := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: privKeyBytes,
+	}
+	src := fmt.Sprintf(javaTemplate, string(pem.EncodeToMemory(privateKeyPEM)))
+
+	s, err := NewScanner()
+	require.NoError(t, err)
+	d, err := s.Scan(t.Context(), []byte(src), t.Name())
+	require.NoError(t, err)
+	require.NotZero(t, d)
+	require.Len(t, d.Findings, 1)
+	f := d.Findings[0]
+	require.Equal(t, "private-key", f.RuleID)
+	// then a single parse private key is detected
+	require.Len(t, f.PEMBundle.PrivateKeys, 1)
 }

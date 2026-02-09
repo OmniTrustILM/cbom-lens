@@ -3,18 +3,26 @@ package cdxprops
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
-	"github.com/zricethezav/gitleaks/v8/report"
+	"github.com/CZERTAINLY/CBOM-lens/internal/model"
 
 	cdx "github.com/CycloneDX/cyclonedx-go"
 )
 
-func (c Converter) leakToComponent(_ context.Context, location string, finding report.Finding) (cdx.Component, bool) {
+func (c Converter) leakToComponents(ctx context.Context, location string, finding model.Finding) ([]cdx.Component, []cdx.Dependency) {
 	var cryptoType cdx.RelatedCryptoMaterialType
 	switch {
 	case finding.RuleID == "private-key":
 		cryptoType = cdx.RelatedCryptoMaterialTypePrivateKey
+		if !isZero(finding.PEMBundle) {
+			d := c.PEMBundle(ctx, finding.PEMBundle)
+			if d == nil {
+				return nil, nil
+			}
+			return d.Components, d.Dependencies
+		}
 	case strings.Contains(finding.RuleID, "jwt"):
 		cryptoType = cdx.RelatedCryptoMaterialTypeToken
 	case strings.Contains(finding.RuleID, "token"):
@@ -50,5 +58,9 @@ func (c Converter) leakToComponent(_ context.Context, location string, finding r
 		},
 	}
 
-	return compo, false
+	return []cdx.Component{compo}, nil
+}
+
+func isZero[T any](x T) bool {
+	return reflect.ValueOf(x).IsZero()
 }

@@ -49,6 +49,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestSupervisor(t *testing.T) {
+	if testing.Short() {
+		t.Skipf("%s is skipped via -short", t.Name())
+	}
 	t.Parallel()
 	t.Run("timer", func(t *testing.T) {
 		var testCases = []struct {
@@ -196,7 +199,6 @@ service:
 			},
 		}
 		supervisor.ConfigureJob(t.Context(), t.Name(), override)
-
 
 		g.Wait()
 		stdout := buf.String()

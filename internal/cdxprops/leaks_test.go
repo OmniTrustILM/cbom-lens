@@ -11,9 +11,9 @@ import (
 	"github.com/CZERTAINLY/CBOM-lens/internal/cdxprops"
 	"github.com/CZERTAINLY/CBOM-lens/internal/cdxprops/cdxtest"
 	"github.com/CZERTAINLY/CBOM-lens/internal/model"
+
 	cdx "github.com/CycloneDX/cyclonedx-go"
 	"github.com/stretchr/testify/require"
-	"github.com/zricethezav/gitleaks/v8/report"
 )
 
 func TestLeakToComponent(t *testing.T) {
@@ -45,7 +45,7 @@ func TestLeakToComponent(t *testing.T) {
 			scenario: "private key should not be ignored",
 			given: model.Leaks{
 				Location: "privKey.pem",
-				Findings: []report.Finding{
+				Findings: []model.Finding{
 					{
 						RuleID:    "private-key",
 						StartLine: startLine,
@@ -63,7 +63,7 @@ func TestLeakToComponent(t *testing.T) {
 			scenario: "jwt token detection",
 			given: model.Leaks{
 				Location: "/path/to/file",
-				Findings: []report.Finding{
+				Findings: []model.Finding{
 					{
 						RuleID:      "jwt-token",
 						Description: "Found JWT token",
@@ -104,7 +104,7 @@ func TestLeakToComponent(t *testing.T) {
 			scenario: "api key detection",
 			given: model.Leaks{
 				Location: "/path/to/file",
-				Findings: []report.Finding{
+				Findings: []model.Finding{
 					{
 						RuleID:      "api-key",
 						Description: "Found API key",
@@ -145,7 +145,7 @@ func TestLeakToComponent(t *testing.T) {
 			scenario: "password detection",
 			given: model.Leaks{
 				Location: "/path/to/file",
-				Findings: []report.Finding{
+				Findings: []model.Finding{
 					{
 						RuleID:      "password-leak",
 						Description: "Found password",
@@ -186,7 +186,7 @@ func TestLeakToComponent(t *testing.T) {
 			scenario: "unknown type detection",
 			given: model.Leaks{
 				Location: "/path/to/file",
-				Findings: []report.Finding{
+				Findings: []model.Finding{
 					{
 						RuleID:      "something-else",
 						Description: "Unknown type",

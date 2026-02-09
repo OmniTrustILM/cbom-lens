@@ -10,6 +10,7 @@ import (
 
 	"github.com/CZERTAINLY/CBOM-lens/internal/log"
 	"github.com/CZERTAINLY/CBOM-lens/internal/model"
+	"github.com/CZERTAINLY/CBOM-lens/internal/stats"
 
 	"github.com/anchore/stereoscope"
 	"github.com/anchore/stereoscope/pkg/file"
@@ -21,22 +22,74 @@ import (
 	"github.com/docker/docker/client"
 )
 
+// Images traverse through all defined containers and their images and all files inside
+func Images(parentContext context.Context, counter *stats.Stats, configs model.ContainersConfig) iter.Seq2[model.Entry, error] {
+	return func(yield func(model.Entry, error) bool) {
+		for _, cc := range configs {
+			counter.IncSources()
+			ctx := log.ContextAttrs(parentContext,
+				slog.Group("container",
+					slog.String("name", cc.Name),
+					slog.String("host", cc.Host),
+				),
+			)
+			cli, err := newClient(ctx, cc)
+			if err != nil {
+				counter.IncErrSources()
+				slog.WarnContext(ctx, "can't connect to container host, skipping", "error", err)
+				if !yield(nil, err) {
+					return
+				}
+				continue
+			}
+			slog.DebugContext(ctx, "connected to container host")
+			defer func() {
+				if cli != nil {
+					_ = cli.Close()
+				}
+			}()
+			for img := range images(ctx, cli, cc) {
+				if img == nil {
+					slog.DebugContext(ctx, "img is nil skipping")
+					continue
+				}
+
+				var ident string
+				if len(img.Metadata.Tags) >= 1 {
+					ident = img.Metadata.Tags[0].String()
+				} else {
+					ident = img.Metadata.ID
+				}
+
+				slog.DebugContext(ctx, "scanning", "image", ident)
+				for entry, err := range image1(ctx, counter, cc.Name, img) {
+					if !yield(entry, err) {
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
 // FS recursively walks the squashed layers of an OCI image.
-// Each Entry's Path() is a real path of file inside.
-func Image(ctx context.Context, image *image.Image) iter.Seq2[Entry, error] {
+// Each model.Entry's Path() is a real path of file inside.
+func image1(ctx context.Context, counter *stats.Stats, name string, image *image.Image) iter.Seq2[model.Entry, error] {
 	if image == nil {
-		return func(yield func(Entry, error) bool) {
+		return func(yield func(model.Entry, error) bool) {
 			yield(nil, errors.New("image is nil"))
 		}
 	}
 
-	return func(yield func(Entry, error) bool) {
+	return func(yield func(model.Entry, error) bool) {
 		done := make(chan struct{})
 		fn := func(path file.Path, node filenode.FileNode) error {
+			counter.IncFiles()
 			if node.FileType != file.TypeRegular {
+				counter.IncExcludedFiles()
 				return nil
 			}
-			if !yield(dentry{node: node, image: image}, nil) {
+			if !yield(dentry{name: name, node: node, image: image}, nil) {
 				close(done)
 			}
 			return nil
@@ -61,49 +114,6 @@ func Image(ctx context.Context, image *image.Image) iter.Seq2[Entry, error] {
 			LinkOptions: nil,
 		}
 		_ = image.SquashedTree().Walk(fn, &cond)
-	}
-}
-
-// Images traverse through all defined containers and their images and all files inside
-func Images(parentContext context.Context, configs model.ContainersConfig) iter.Seq2[Entry, error] {
-	return func(yield func(Entry, error) bool) {
-		for _, cc := range configs {
-			ctx := log.ContextAttrs(parentContext, slog.String("host", cc.Host))
-			cli, err := newClient(ctx, cc)
-			if err != nil {
-				slog.WarnContext(ctx, "can't connect to container host, skipping", "error", err)
-				if !yield(nil, err) {
-					return
-				}
-				continue
-			}
-			slog.DebugContext(ctx, "connected to container host")
-			defer func() {
-				if cli != nil {
-					_ = cli.Close()
-				}
-			}()
-			for img := range images(ctx, cli, cc) {
-				if img == nil {
-					slog.DebugContext(ctx, "img is nil skipping")
-					continue
-				}
-
-				var ident string
-				if img.Metadata.Tags != nil {
-					ident = img.Metadata.Tags[0].String()
-				} else {
-					ident = img.Metadata.ID
-				}
-
-				slog.DebugContext(ctx, "scanning", "image", ident)
-				for entry, err := range Image(ctx, img) {
-					if !yield(entry, err) {
-						return
-					}
-				}
-			}
-		}
 	}
 }
 
@@ -164,15 +174,24 @@ func imagesAll(ctx context.Context, cli *client.Client) iter.Seq2[*image.Image, 
 	}
 }
 
-// dentry implements Entry for an image file node
+// dentry implements model.Entry for an image file node
 // uses OpenReference and FileCatalog.Get for Open/Stat operations
 type dentry struct {
+	name  string
 	node  filenode.FileNode
 	image *image.Image
 }
 
-func (e dentry) Path() string {
-	return string(e.node.RealPath)
+func (e dentry) Location() string {
+	var imageRef string
+
+	if len(e.image.Metadata.Tags) >= 1 {
+		imageRef = e.image.Metadata.Tags[0].Identifier()
+	} else {
+		imageRef = e.image.Metadata.ManifestDigest
+	}
+
+	return "container://" + e.name + "/" + imageRef + string(e.node.RealPath)
 }
 
 func (e dentry) Open() (io.ReadCloser, error) {

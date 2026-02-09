@@ -169,6 +169,7 @@ func portToModel(ctx context.Context, port nmap.Port) model.NmapPort {
 		Service: model.NmapService{
 			Name:    port.Service.Name,
 			Product: port.Service.Product,
+			Tunnel:  port.Service.Tunnel,
 			Version: port.Service.Version,
 		},
 	}

@@ -3,9 +3,11 @@ package gitleaks
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/CZERTAINLY/CBOM-lens/internal/model"
+	"github.com/CZERTAINLY/CBOM-lens/internal/scanner/pem"
 
 	"github.com/zricethezav/gitleaks/v8/detect"
 )
@@ -50,8 +52,27 @@ func (d *Scanner) Scan(ctx context.Context, b []byte, path string) (model.Leaks,
 	detector := d.pool.Get().(*detect.Detector)
 	defer d.pool.Put(detector)
 
+	reports := detector.DetectString(string(b))
+	var findings = make([]model.Finding, len(reports))
+	for i, r := range reports {
+		findings[i] = model.Finding{
+			RuleID:      r.RuleID,
+			Description: r.Description,
+			StartLine:   r.StartLine,
+			Secret:      r.Secret,
+		}
+		if r.RuleID == "private-key" {
+			bundle, err := pem.Scanner{}.Scan(ctx, b, path)
+			if err == nil {
+				findings[i].PEMBundle = bundle
+			} else {
+				slog.WarnContext(ctx, "can't parse private-key", "error", err)
+			}
+		}
+	}
+
 	return model.Leaks{
 		Location: path,
-		Findings: detector.DetectString(string(b)),
+		Findings: findings,
 	}, nil
 }

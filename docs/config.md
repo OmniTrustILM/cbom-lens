@@ -33,10 +33,32 @@ Configure filesystem scan. Following modules are used
  * secrets
 
 - `enabled` (bool, default false) Enable filesystem scanning.
-- `paths` (list of string, optional, default: if unset current working directory) paths to scan. If path is not accessible Warning is printed to logs.
+- `paths` (list of string, optional, default: if unset directory of a configuration file) paths to scan. If path is not accessible Warning is printed to logs.
 
-Notes:
-- If `filesystem.enabled` is false (or omitted) no filesystem paths are processed.
+> [!NOTE]
+> If `filesystem.enabled` is false (or omitted) no filesystem paths are processed.
+
+### Path resolution
+
+Relative paths are resolved against the directory of the configuration file; absolute paths remain unchanged.
+
+Example input:
+```yaml
+filesystem:
+  enabled: true
+  paths:
+    - /absolute
+    - relative
+```
+
+Command:
+```
+cbom-lens run --config /tmp/config.yaml
+```
+
+Resolved paths:
+- `/absolute`
+- `/tmp/relative`
 
 ## Containers:
 

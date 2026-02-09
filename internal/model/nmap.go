@@ -11,7 +11,7 @@ type Nmap struct {
 type NmapPort struct {
 	PortNumber  int
 	State       string
-	Protocol    string
+	Protocol    string // eg tcp
 	Service     NmapService
 	Ciphers     []SSLEnumCiphers
 	TLSCerts    []CertHit
@@ -22,6 +22,7 @@ type NmapPort struct {
 type NmapService struct {
 	Name    string
 	Product string
+	Tunnel  string // can be empty
 	Version string
 }
 
