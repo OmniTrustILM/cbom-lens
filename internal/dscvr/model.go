@@ -193,7 +193,7 @@ func (a attrCodeblock) MarshalJSON() ([]byte, error) {
 
 func validateAttr(attrs []RequestAttributeDto) error {
 	if len(attrs) == 0 {
-		return errors.New("attributes array cannot be empty")
+		return nil
 	}
 
 	for _, attr := range attrs {
