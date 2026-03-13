@@ -196,6 +196,52 @@ func (a attrCodeblock) MarshalJSON() ([]byte, error) {
 	return json.Marshal(aux)
 }
 
+func (a *attrCodeblockContent) UnmarshalJSON(b []byte) error {
+	type auxContent struct {
+		Reference *string         `json:"reference,omitempty"`
+		RawData   json.RawMessage `json:"data"`
+	}
+	var aux auxContent
+	if err := json.Unmarshal(b, &aux); err != nil {
+		return err
+	}
+	a.Reference = aux.Reference
+	a.RawData = aux.RawData
+
+	// Attempt to unmarshal as CodeBlockAttributeContentData first
+	var codeData attrCodeblockContentData
+	if err := json.Unmarshal(aux.RawData, &codeData); err == nil && codeData.Language != "" && codeData.Code != "" {
+		a.Data = codeData
+		return nil
+	}
+
+	// Fallback to string (TextAttributeContent)
+	var strData string
+	if err := json.Unmarshal(aux.RawData, &strData); err == nil {
+		a.Data = strData
+		return nil
+	}
+
+	// Final fallback to generic map if nested structure is unknown
+	var genericData any
+	if err := json.Unmarshal(aux.RawData, &genericData); err != nil {
+		return err
+	}
+	a.Data = genericData
+	return nil
+}
+
+func (a attrCodeblockContent) MarshalJSON() ([]byte, error) {
+	type auxContent struct {
+		Reference *string `json:"reference,omitempty"`
+		Data      any     `json:"data"`
+	}
+	return json.Marshal(auxContent{
+		Reference: a.Reference,
+		Data:      a.Data,
+	})
+}
+
 func validateAttr(attrs []RequestAttributeDto) error {
 	if len(attrs) == 0 {
 		return nil
