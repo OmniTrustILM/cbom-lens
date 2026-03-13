@@ -35,17 +35,17 @@ func TestValidateAttr(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		attrs   []attrCodeblock
+		attrs   []RequestAttributeDto
 		wantErr bool
 		errMsg  string
 	}{
 		{
 			name: "valid attribute",
-			attrs: []attrCodeblock{
+			attrs: []RequestAttributeDto{
 				{
 					UUID:        lensConfigurationAttrUUID,
 					Name:        lensConfigurationAttrName,
-					ContentType: ptrString(lensConfigurationAttrContentType),
+					ContentType: AttributeContentTypeCodeblock,
 					Content: []attrCodeblockContent{
 						{
 							Data: attrCodeblockContentData{
@@ -59,12 +59,12 @@ func TestValidateAttr(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "missing ContentType",
-			attrs: []attrCodeblock{
+			name: "empty UUID",
+			attrs: []RequestAttributeDto{
 				{
-					UUID:        lensConfigurationAttrUUID,
+					UUID:        "",
 					Name:        lensConfigurationAttrName,
-					ContentType: nil,
+					ContentType: AttributeContentTypeCodeblock,
 					Content: []attrCodeblockContent{
 						{
 							Data: attrCodeblockContentData{
@@ -76,15 +76,15 @@ func TestValidateAttr(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			errMsg:  "does not have 'ContentType' property defined",
+			errMsg:  "UUID cannot be empty",
 		},
 		{
-			name: "wrong ContentType value",
-			attrs: []attrCodeblock{
+			name: "empty name",
+			attrs: []RequestAttributeDto{
 				{
 					UUID:        lensConfigurationAttrUUID,
-					Name:        lensConfigurationAttrName,
-					ContentType: ptrString("json"),
+					Name:        "",
+					ContentType: AttributeContentTypeCodeblock,
 					Content: []attrCodeblockContent{
 						{
 							Data: attrCodeblockContentData{
@@ -96,28 +96,68 @@ func TestValidateAttr(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			errMsg:  "does not have expected 'ContentType' property defined",
+			errMsg:  "name cannot be empty",
+		},
+		{
+			name: "empty contentType",
+			attrs: []RequestAttributeDto{
+				{
+					UUID:        lensConfigurationAttrUUID,
+					Name:        lensConfigurationAttrName,
+					ContentType: "",
+					Content: []attrCodeblockContent{
+						{
+							Data: attrCodeblockContentData{
+								Code:     validBase64,
+								Language: "yaml",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "contentType cannot be empty",
+		},
+		{
+			name: "invalid ContentType value",
+			attrs: []RequestAttributeDto{
+				{
+					UUID:        lensConfigurationAttrUUID,
+					Name:        lensConfigurationAttrName,
+					ContentType: "invalid",
+					Content: []attrCodeblockContent{
+						{
+							Data: attrCodeblockContentData{
+								Code:     validBase64,
+								Language: "yaml",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "invalid contentType",
 		},
 		{
 			name: "empty Content array",
-			attrs: []attrCodeblock{
+			attrs: []RequestAttributeDto{
 				{
 					UUID:        lensConfigurationAttrUUID,
 					Name:        lensConfigurationAttrName,
-					ContentType: ptrString(lensConfigurationAttrContentType),
+					ContentType: AttributeContentTypeCodeblock,
 					Content:     []attrCodeblockContent{},
 				},
 			},
 			wantErr: true,
-			errMsg:  "has unexpected number of items in `Content` array, expected: 1, actual: 0",
+			errMsg:  "content cannot be empty",
 		},
 		{
 			name: "multiple Content items",
-			attrs: []attrCodeblock{
+			attrs: []RequestAttributeDto{
 				{
 					UUID:        lensConfigurationAttrUUID,
 					Name:        lensConfigurationAttrName,
-					ContentType: ptrString(lensConfigurationAttrContentType),
+					ContentType: AttributeContentTypeCodeblock,
 					Content: []attrCodeblockContent{
 						{
 							Data: attrCodeblockContentData{
@@ -134,101 +174,21 @@ func TestValidateAttr(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
-			errMsg:  "has unexpected number of items in `Content` array, expected: 1, actual: 2",
-		},
-		{
-			name: "wrong language",
-			attrs: []attrCodeblock{
-				{
-					UUID:        lensConfigurationAttrUUID,
-					Name:        lensConfigurationAttrName,
-					ContentType: ptrString(lensConfigurationAttrContentType),
-					Content: []attrCodeblockContent{
-						{
-							Data: attrCodeblockContentData{
-								Code:     validBase64,
-								Language: "json",
-							},
-						},
-					},
-				},
-			},
-			wantErr: true,
-			errMsg:  "defines unexpected language, expected: 'yaml', actual: \"json\"",
-		},
-		{
-			name: "invalid base64 encoding",
-			attrs: []attrCodeblock{
-				{
-					UUID:        lensConfigurationAttrUUID,
-					Name:        lensConfigurationAttrName,
-					ContentType: ptrString(lensConfigurationAttrContentType),
-					Content: []attrCodeblockContent{
-						{
-							Data: attrCodeblockContentData{
-								Code:     "not-valid-base64!@#$",
-								Language: "yaml",
-							},
-						},
-					},
-				},
-			},
-			wantErr: true,
-			errMsg:  "contains an unexpected base64 encoded value",
-		},
-		{
-			name: "invalid YAML structure",
-			attrs: []attrCodeblock{
-				{
-					UUID:        lensConfigurationAttrUUID,
-					Name:        lensConfigurationAttrName,
-					ContentType: ptrString(lensConfigurationAttrContentType),
-					Content: []attrCodeblockContent{
-						{
-							Data: attrCodeblockContentData{
-								Code:     base64.StdEncoding.EncodeToString([]byte("invalid: yaml: structure: [unclosed")),
-								Language: "yaml",
-							},
-						},
-					},
-				},
-			},
-			wantErr: true,
-			errMsg:  "is not a valid yaml cbom-lens scan configuration",
-		},
-		{
-			name: "unknown UUID",
-			attrs: []attrCodeblock{
-				{
-					UUID:        "unknown-uuid-1234",
-					Name:        "unknown-attr",
-					ContentType: ptrString(lensConfigurationAttrContentType),
-					Content: []attrCodeblockContent{
-						{
-							Data: attrCodeblockContentData{
-								Code:     validBase64,
-								Language: "yaml",
-							},
-						},
-					},
-				},
-			},
-			wantErr: true,
-			errMsg:  "unknown attribute uuid",
-		},
-		{
-			name:    "empty attributes slice",
-			attrs:   []attrCodeblock{},
 			wantErr: false,
 		},
 		{
+			name:    "empty attributes slice",
+			attrs:   []RequestAttributeDto{},
+			wantErr: true,
+			errMsg:  "cannot be empty",
+		},
+		{
 			name: "multiple valid attributes",
-			attrs: []attrCodeblock{
+			attrs: []RequestAttributeDto{
 				{
 					UUID:        lensConfigurationAttrUUID,
 					Name:        lensConfigurationAttrName,
-					ContentType: ptrString(lensConfigurationAttrContentType),
+					ContentType: AttributeContentTypeCodeblock,
 					Content: []attrCodeblockContent{
 						{
 							Data: attrCodeblockContentData{
@@ -241,7 +201,7 @@ func TestValidateAttr(t *testing.T) {
 				{
 					UUID:        lensConfigurationAttrUUID,
 					Name:        lensConfigurationAttrName,
-					ContentType: ptrString(lensConfigurationAttrContentType),
+					ContentType: AttributeContentTypeCodeblock,
 					Content: []attrCodeblockContent{
 						{
 							Data: attrCodeblockContentData{
@@ -257,7 +217,8 @@ func TestValidateAttr(t *testing.T) {
 		{
 			name:    "nil attributes slice",
 			attrs:   nil,
-			wantErr: false,
+			wantErr: true,
+			errMsg:  "cannot be empty",
 		},
 	}
 

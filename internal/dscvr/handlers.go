@@ -283,7 +283,7 @@ func (s *Server) validateAttributes(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.DebugContext(ctx, "Request body.", slog.String("body", string(b)))
 
-	var attrs RequestAttributeDto
+	var attrs []RequestAttributeDto
 	if err := json.Unmarshal(b, &attrs); err != nil {
 		slog.DebugContext(ctx, "Calling `json.Unmarshal()` failed", slog.String("error", err.Error()))
 		toJsonErr(r.Context(), w, generalErrMsgResp{Message: "Request body contains invalid JSON."}, http.StatusUnprocessableEntity)
