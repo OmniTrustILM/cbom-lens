@@ -22,7 +22,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.40.0
-	github.com/zricethezav/gitleaks/v8 v8.30.0
+	github.com/zricethezav/gitleaks/v8 v8.30.1
 	go.uber.org/goleak v1.3.0
 	go.uber.org/mock v0.6.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.3
