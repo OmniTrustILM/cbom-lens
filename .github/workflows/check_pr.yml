@@ -12,7 +12,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Install nmap
@@ -23,10 +23,14 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: stable
+
+      # Run linting
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # @v9
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 #v9.2.0
         with:
           version: latest
+
+      # Run unit tests and generate coverage report
       - name: Verify dependencies
         run: go mod verify
       - name: Build
@@ -56,7 +60,7 @@ jobs:
           cat pr-context.json
 
       - name: Upload PR context
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: pr-context
           path: pr-context.json
@@ -64,14 +68,14 @@ jobs:
           if-no-files-found: error
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: coverage-report
           path: coverage.*.out
           if-no-files-found: error
 
       - name: Upload golangci-lint report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: golangci-lint-report
           path: golangci-lint-report.xml

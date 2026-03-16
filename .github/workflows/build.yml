@@ -51,10 +51,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
           go-version: stable
           cache: 'true'
@@ -101,7 +101,7 @@ jobs:
           cat "SHA256SUMS-${NAME}.txt"
 
       - name: Upload artifact (${{ matrix.goos }}/${{ matrix.goarch }})
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ env.APP_NAME }}-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}
           path: |
@@ -111,7 +111,7 @@ jobs:
 
       - name: Release artifact (${{ matrix.goos }}/${{ matrix.goarch }})
         if: github.ref_type == 'tag'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
@@ -122,3 +122,8 @@ jobs:
             dist/SHA256SUMS-${{ env.APP_NAME }}-${{ env.VERSION }}-${{ matrix.goos }}-${{ matrix.goarch }}*.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
+        env:
+          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
