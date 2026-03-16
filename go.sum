@@ -30,6 +30,7 @@ github.com/STARRY-S/zip v0.2.3 h1:luE4dMvRPDOWQdeDdUxUoZkzUIpTccdKdhHHsQJ1fm4=
 github.com/STARRY-S/zip v0.2.3/go.mod h1:lqJ9JdeRipyOQJrYSOtpNAiaesFO6zVDsE8GIGFaoSk=
 github.com/Ullaakut/nmap/v3 v3.1.0 h1:6gukuRH3iJYIpt860eKHdsy+Ls0Ty1z/7O1QcDKItdA=
 github.com/Ullaakut/nmap/v3 v3.1.0/go.mod h1:dd5K68P7LHc5nKrFwQx6EdTt61O9UN5x3zn1R4SLcco=
+github.com/Ullaakut/nmap/v4 v4.0.0/go.mod h1:B+MtOtHdb+jR9bc11BNwZX1QVHOtsDjfKkXMCZtRzbw=
 github.com/adrg/xdg v0.5.3 h1:xRnxJXne7+oWDatRhR1JLnvuccuIeCoBu2rtuLqQB78=
 github.com/adrg/xdg v0.5.3/go.mod h1:nlTsY+NNiCBGCK2tpm09vRqfVzrc2fLmXGpBLF0zlTQ=
 github.com/anchore/go-collections v0.0.0-20260302190843-dc98b39e97d0 h1:E9SqbbwjzGN7vb9loJBLgIR6ZV7cuvAOmC34+CVu6uE=
