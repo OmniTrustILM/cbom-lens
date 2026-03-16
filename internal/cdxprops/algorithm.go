@@ -556,21 +556,28 @@ func (i algorithmInfo) componentWOBomRef(withCzertainly bool) cdx.Component {
 		nqsl = &i.nistQuantumSecurityLevel
 	}
 
-	// Sort crypto functions for consistent output
-	sortedFunctions := make([]cdx.CryptoFunction, len(i.cryptoFunctions))
-	copy(sortedFunctions, i.cryptoFunctions)
-	slices.SortFunc(sortedFunctions, func(a, b cdx.CryptoFunction) int {
-		return strings.Compare(string(a), string(b))
-	})
+	var sortedFunctions []cdx.CryptoFunction
+	if len(i.cryptoFunctions) > 0 {
+		// Sort crypto functions for consistent output
+		sortedFunctions = make([]cdx.CryptoFunction, len(i.cryptoFunctions))
+		copy(sortedFunctions, i.cryptoFunctions)
+		slices.SortFunc(sortedFunctions, func(a, b cdx.CryptoFunction) int {
+			return strings.Compare(string(a), string(b))
+		})
+	}
+
+	algoProps := &cdx.CryptoAlgorithmProperties{
+		ExecutionEnvironment:     cdx.CryptoExecutionEnvironmentSoftwarePlainRAM,
+		ClassicalSecurityLevel:   &i.classicalSecurityLevel,
+		NistQuantumSecurityLevel: nqsl,
+	}
+	if len(sortedFunctions) > 0 {
+		algoProps.CryptoFunctions = &sortedFunctions
+	}
 
 	cryptoProps := &cdx.CryptoProperties{
-		AssetType: cdx.CryptoAssetTypeAlgorithm,
-		AlgorithmProperties: &cdx.CryptoAlgorithmProperties{
-			ExecutionEnvironment:     cdx.CryptoExecutionEnvironmentSoftwarePlainRAM,
-			CryptoFunctions:          &sortedFunctions,
-			ClassicalSecurityLevel:   &i.classicalSecurityLevel,
-			NistQuantumSecurityLevel: nqsl,
-		},
+		AssetType:           cdx.CryptoAssetTypeAlgorithm,
+		AlgorithmProperties: algoProps,
 	}
 
 	if i.oid != "" {
