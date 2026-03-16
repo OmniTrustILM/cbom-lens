@@ -196,12 +196,16 @@ func (c Converter) ImplementationPlatform() cdx.ImplementationPlatform {
 		return cdx.ImplementationPlatformX86_64
 	case "386":
 		return cdx.ImplementationPlatformX86_32
-	case "ppc64", "ppc64le":
+	case "arm64":
+		return cdx.ImplementationPlatformARMv8A
+	case "ppc64":
 		return cdx.ImplementationPlatformPPC64
+	case "ppc64le":
+		return cdx.ImplementationPlatformPPC64LE
 	case "s390x":
 		return cdx.ImplementationPlatformS390x
 	default:
-		return cdx.ImplementationPlatform(runtime.GOARCH)
+		return cdx.ImplementationPlatformUnknown
 	}
 }
 

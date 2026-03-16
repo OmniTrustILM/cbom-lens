@@ -201,7 +201,9 @@ func (c Converter) certHitToSignatureAlgComponent(ctx context.Context, hit model
 			AlgorithmProperties: &cryptoProps,
 			OID:                 oid,
 		},
-		Properties: &props,
+	}
+	if len(props) > 0 {
+		sigAlgCompo.Properties = &props
 	}
 
 	c.BOMRefHash(&sigAlgCompo, bomName)

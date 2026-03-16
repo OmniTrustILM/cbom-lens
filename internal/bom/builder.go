@@ -121,9 +121,10 @@ func (b *Builder) BOM(ctx context.Context) cdx.BOM {
 		dependencies = append(dependencies, safeRefs.dependency(ctx, bomRef, depsp))
 	}
 
-	var statistics []cdx.Property
+	var metadataProperties *[]cdx.Property
 	if b.counter != nil {
-		statistics = bomStatistics(b.counter)
+		p := bomStatistics(b.counter)
+		metadataProperties = &p
 	}
 
 	bom := cdx.BOM{
@@ -155,7 +156,7 @@ func (b *Builder) BOM(ctx context.Context) cdx.BOM {
 					},
 				},
 			},
-			Properties: &statistics,
+			Properties: metadataProperties,
 		},
 		Components:   &components,
 		Dependencies: &dependencies,
