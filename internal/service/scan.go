@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"iter"
 	"log/slog"
 	"sync"
@@ -114,7 +115,7 @@ func (s *Scan) scan(ctx context.Context, entry model.Entry) ([]model.Detection, 
 	bp := s.pool.Get().(*[]byte)
 	buf := *bp
 	clear(buf)
-	n, err := f.Read(buf)
+	buf, err = io.ReadAll(f)
 	if err != nil {
 		s.counter.IncErrFiles()
 		s.poolPutErrCounter.Add(1)
@@ -127,7 +128,7 @@ func (s *Scan) scan(ctx context.Context, entry model.Entry) ([]model.Detection, 
 	}()
 	// IMPORTANT: data must be passed as buf[:n] otherwise data from a previous
 	// file will be passed in
-	buf = buf[:n]
+	buf = buf[:len(buf)]
 
 	var detectionErrors []error
 	res := make([]model.Detection, 0, 10)
