@@ -2,14 +2,16 @@
 # test-wine.sh — test the Windows registry scanner under Wine on Linux.
 #
 # Prerequisites:
-#   - wine (wine64) installed and a WINEPREFIX initialised
+#   - wine (wine64) installed
 #   - Go toolchain for cross-compilation
 #
 # What it does:
+#   0. Cleanup the special WINEPREFIX for testing
 #   1. Cross-compiles cbom-lens for windows/amd64
-#   2. Writes a self-signed PEM certificate into Wine's registry
-#   3. Runs the scanner via Wine and validates the CBOM output
-#   4. Cleans up the test registry key
+#   2. Initialize the WINEPREFIX
+#   3. Writes a self-signed PEM certificate into Wine's registry at WINEPREFIX
+#   4. Runs the scanner via Wine and validates the CBOM output
+#   5. Cleans up the test registry key
 #
 # Usage:
 #   ./testing/registry/test-wine.sh [--keep]
