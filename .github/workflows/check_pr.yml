@@ -111,15 +111,12 @@ jobs:
         shell: pwsh
         run: |
           New-Item -Path "HKCU:\Software\CBOMLensTest" -Force | Out-Null
-          $pem = @"
-          -----BEGIN CERTIFICATE-----
-          MIICpDCCAYwCCQDU+pQ4pHgSpDANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
-          b2NhbGhvc3QwHhcNMjMwMTAxMDAwMDAwWhcNMjQwMTAxMDAwMDAwWjAUMRIwEAYD
-          VQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC7
-          o4qne60TB3wolVWqoRxgHrPMHb3rj6Ge1IOJt3V0JVy19X5IKlP8q6r0eBMEEFMY
-          -----END CERTIFICATE-----
-          "@
-          Set-ItemProperty -Path "HKCU:\Software\CBOMLensTest" -Name "PEMCert" -Value $pem.Trim() -Type String
+          $cert = New-SelfSignedCertificate -DnsName "cbom-lens-ci-test" -CertStoreLocation "Cert:\CurrentUser\My" -NotAfter (Get-Date).AddDays(1)
+          $pem = "-----BEGIN CERTIFICATE-----`n"
+          $pem += [Convert]::ToBase64String($cert.RawData, [Base64FormattingOptions]::InsertLineBreaks)
+          $pem += "`n-----END CERTIFICATE-----"
+          Set-ItemProperty -Path "HKCU:\Software\CBOMLensTest" -Name "PEMCert" -Value $pem -Type String
+          Remove-Item -Path "Cert:\CurrentUser\My\$($cert.Thumbprint)" -Force
 
       - name: Run registry scan
         shell: pwsh
@@ -140,6 +137,7 @@ jobs:
           .\cbom-lens-ci.exe run --config cbom-lens-test.yaml | Out-File -FilePath output.json
           $json = Get-Content output.json | ConvertFrom-Json
           if ($null -eq $json.bomFormat) { Write-Error "Output is not a valid CBOM"; exit 1 }
+          if ($json.components.Count -eq 0) { Write-Error "No components detected — registry scanner may not be working"; exit 1 }
 
       - name: Cleanup test registry key
         if: always()
