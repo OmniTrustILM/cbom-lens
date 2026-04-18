@@ -50,6 +50,7 @@ type Scan struct {
 	Filesystem Filesystem    `json:"filesystem"`
 	Containers Containers    `json:"containers"`
 	Ports      Ports         `json:"ports"`
+	Registry   Registry      `json:"registry"`
 	Service    ServiceFields `json:"service"`
 	CBOM       CBOM          `json:"cbom"`
 }
@@ -60,6 +61,7 @@ type Config struct {
 	Filesystem Filesystem `json:"filesystem"`
 	Containers Containers `json:"containers"`
 	Ports      Ports      `json:"ports"`
+	Registry   Registry   `json:"registry"`
 	Service    Service    `json:"service"`
 	CBOM       CBOM       `json:"cbom"`
 }
@@ -92,6 +94,28 @@ type Ports struct {
 	Ports   string `json:"ports,omitempty"`  // "1-65535", "22,80,8000-8100", etc.
 	IPv4    bool   `json:"ipv4"`
 	IPv6    bool   `json:"ipv6"`
+}
+
+type Registry struct {
+	Enabled      bool           `json:"enabled"        yaml:"enabled"`
+	Paths        []RegistryPath `json:"paths"          yaml:"paths,omitempty"`
+	MaxDepth     int            `json:"max_depth"      yaml:"max_depth"` // 0 = unlimited
+	MaxValueSize int            `json:"max_value_size" yaml:"max_value_size" default:"1048576"`
+	WOW64        bool           `json:"wow64"          yaml:"wow64"`
+	Include      RegistryFilter `json:"include"        yaml:"include,omitempty"`
+	Exclude      RegistryFilter `json:"exclude"        yaml:"exclude,omitempty"`
+}
+
+func (r Registry) IsZero() bool { return isZero(r) }
+
+type RegistryPath struct {
+	Hive string `json:"hive" yaml:"hive"` // "HKLM", "HKCU", "HKCR", "HKU", "HKCC"
+	Key  string `json:"key"  yaml:"key"`
+}
+
+type RegistryFilter struct {
+	Keys   []string `json:"keys"   yaml:"keys,omitempty"`
+	Values []string `json:"values" yaml:"values,omitempty"`
 }
 
 type ServiceFields struct {
@@ -143,6 +167,7 @@ func (c Config) IsZero() bool {
 	return c.Filesystem.IsZero() &&
 		c.Containers.Config.IsZero() &&
 		c.Ports.IsZero() &&
+		c.Registry.IsZero() &&
 		c.Service.IsZero()
 }
 
