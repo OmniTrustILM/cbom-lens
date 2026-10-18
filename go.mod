@@ -1,6 +1,6 @@
 module github.com/OmniTrustILM/cbom-lens
 
-go 1.26.5
+go 1.26.9
 
 require (
 	cuelang.org/go v0.17.1
