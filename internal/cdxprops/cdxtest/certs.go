@@ -246,7 +246,7 @@ func GenCRL(cert *x509.Certificate, priv crypto.Signer) (*x509.RevocationList, [
 		Number:     big.NewInt(1),
 		ThisUpdate: time.Now(),
 		NextUpdate: time.Now().Add(24 * time.Hour),
-		RevokedCertificates: []pkix.RevokedCertificate{
+		RevokedCertificateEntries: []x509.RevocationListEntry{
 			{
 				SerialNumber:   big.NewInt(42),
 				RevocationTime: time.Now(),

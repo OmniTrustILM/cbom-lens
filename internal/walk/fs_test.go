@@ -40,7 +40,8 @@ func TestFS_CanceledContext(t *testing.T) {
 	seq := walk.FS(ctx, counter, root, "/")
 	require.NotNil(t, seq)
 	count := 0
-	for range seq {
+	for _, err := range seq {
+		require.NoError(t, err)
 		count++
 	}
 	require.Equal(t, 0, count, "no entries should be yielded when context is canceled")

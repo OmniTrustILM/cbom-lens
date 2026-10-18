@@ -33,7 +33,8 @@ func TestImages_FakeDaemonEmpty(t *testing.T) {
 
 	idx := 0
 	counter := stats.New(t.Name())
-	for range walk.Images(t.Context(), counter, []model.ContainerConfig{config}) {
+	for _, err := range walk.Images(t.Context(), counter, []model.ContainerConfig{config}) {
+		require.NoError(t, err)
 		idx++
 	}
 	require.Equal(t, 0, idx)
