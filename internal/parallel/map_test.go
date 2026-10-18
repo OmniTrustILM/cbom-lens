@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/OmniTrustILM/cbom-lens/internal/parallel"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -68,7 +69,7 @@ func TestMap(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				start := time.Now()
 				m1 := parallel.NewMap(tt.given.ctx(t), tt.given.limit, f).Iter(all(input))
-				require.ElementsMatch(t, tt.then.values, values(m1))
+				require.ElementsMatch(t, tt.then.values, values(t, m1))
 				require.Equal(t, tt.then.d, time.Since(start))
 			})
 		})
@@ -135,7 +136,8 @@ func TestMap_AbandonedIterWithInputError(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		for range parallel.NewMap(t.Context(), 1, f).Iter(seq) {
+		for _, err := range parallel.NewMap(t.Context(), 1, f).Iter(seq) {
+			assert.Error(t, err)
 			break
 		}
 	}()
@@ -157,9 +159,11 @@ func all[T any](s []T) iter.Seq2[T, error] {
 	}
 }
 
-func values[T any](i iter.Seq2[T, error]) []T {
+func values[T any](t *testing.T, i iter.Seq2[T, error]) []T {
+	t.Helper()
 	var ret []T
-	for k := range i {
+	for k, err := range i {
+		require.NoError(t, err)
 		ret = append(ret, k)
 	}
 	return ret
